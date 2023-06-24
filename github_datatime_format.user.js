@@ -5,8 +5,8 @@
 // @description  使用北京时间 24 小时格式显示时间
 // @icon         https://github.com/fluidicon.png
 // @author       guyuexuan
-// @updateURL    https://ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/github_datatime_format.js
-// @downloadURL  https://ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/github_datatime_format.js
+// @updateURL    https://ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/github_datatime_format.user.js
+// @downloadURL  https://ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/github_datatime_format.user.js
 // @match        *://github.com/*
 // @match        *://kgithub.com/*
 // @match        *://hub.fgit.ml/*
