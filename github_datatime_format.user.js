@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Github 显示 24 小时时间格式
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
+// @version      1.2.0
 // @description  使用北京时间 24 小时格式显示时间
 // @icon         https://github.com/fluidicon.png
 // @author       guyuexuan
@@ -13,8 +13,6 @@
 // @match        *://hub.fgit.gq/*
 // @run-at       document-idle
 // @grant        none
-// @changelog    Changes in 1.1.0:
-//               - 当年更新不显示年份
 // ==/UserScript==
 
 (function() {
