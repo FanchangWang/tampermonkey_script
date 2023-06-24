@@ -6,6 +6,7 @@
 // @icon         https://github.com/fluidicon.png
 // @author       guyuexuan
 // @updateURL    https://ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/github_datatime_format.js
+// @downloadURL  https://ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/github_datatime_format.js
 // @match        *://github.com/*
 // @match        *://kgithub.com/*
 // @match        *://hub.fgit.ml/*
