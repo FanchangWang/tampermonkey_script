@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Github 显示 24 小时时间格式
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.1.0
 // @description  使用北京时间 24 小时格式显示时间
 // @icon         https://github.com/fluidicon.png
 // @author       guyuexuan
@@ -13,6 +13,8 @@
 // @match        *://hub.fgit.gq/*
 // @run-at       document-idle
 // @grant        none
+// @changelog    Changes in 1.1.0:
+//               - 当年更新不显示年份
 // ==/UserScript==
 
 (function() {
@@ -20,20 +22,21 @@
     function formatDateTime(datetimeString) {
         const dateTime = new Date(datetimeString);
         const now = new Date();
-        const dayDiff = (now.getTime() - dateTime.getTime()) / (1000 * 3600 * 24);
-        const hour = dateTime.getHours();
-        const minute = dateTime.getMinutes();
-        const second = dateTime.getSeconds();
+        const dayDiff = (now - dateTime) / (1000 * 3600 * 24);
+        const hour = dateTime.getHours().toString().padStart(2, "0");
+        const minute = dateTime.getMinutes().toString().padStart(2, "0");
+        const second = dateTime.getSeconds().toString().padStart(2, "0");
+        const year = dateTime.getFullYear();
+        const month = (dateTime.getMonth() + 1).toString().padStart(2, "0");
+        const day = dateTime.getDate().toString().padStart(2, "0");
         if (dayDiff < 1 && now.getDate() === dateTime.getDate()) {
-            return `今天 ${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:${second.toString().padStart(2, "0")}`;
+            return `今天 ${hour}:${minute}:${second}`;
         } else if (dayDiff < 2 && now.getDate() - dateTime.getDate() === 1) {
-            return `昨天 ${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:${second.toString().padStart(2, "0")}`;
+            return `昨天 ${hour}:${minute}:${second}`;
+        } else if (year === now.getFullYear()) {
+            return `${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")} ${hour}:${minute}:${second}`;
         } else {
-            const year = dateTime.getFullYear();
-            const month = dateTime.getMonth() + 1;
-            const day = dateTime.getDate();
-            const formattedDateTime = `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")} ${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:${second.toString().padStart(2, "0")}`;
-            return formattedDateTime;
+            return `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")} ${hour}:${minute}:${second}`;
         }
     }
 
