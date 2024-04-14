@@ -2,7 +2,7 @@
 // @name         跳过抖音广告、直播
 // @namespace    http://tampermonkey.net/
 // @version      1.3.0
-// @description  跳过抖音广告、直播
+// @description  跳过抖音广告、直播，支持配置保存
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
 // @license      MIT
