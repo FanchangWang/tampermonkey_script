@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Github 显示 24 小时时间格式
 // @namespace    http://tampermonkey.net/
-// @version      1.2.0
+// @version      1.3.0
 // @description  使用北京时间 24 小时格式显示时间
 // @icon         https://github.com/fluidicon.png
 // @author       guyuexuan
@@ -44,7 +44,6 @@
             item.shadowRoot.textContent = formatDateTime(item.datetime.toString())
         });
     }
-    applyDateTimeFormat();
 
     // 监听 Github 页面的主体区域，动态添加的评论等内容会在这里
     const observer = new MutationObserver((mutations) => {
