@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Github 显示 24 小时时间格式
 // @namespace    http://tampermonkey.net/
-// @version      1.3.0
+// @version      1.4.0
 // @description  使用北京时间 24 小时格式显示时间
 // @icon         https://github.com/fluidicon.png
 // @author       guyuexuan
+// @license      MIT
 // @updateURL    https://mirror.ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/github_datatime_format.user.js
 // @downloadURL  https://mirror.ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/github_datatime_format.user.js
 // @match        *://github.com/*
