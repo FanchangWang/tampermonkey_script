@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         跳过抖音广告
+// @name         跳过抖音广告、直播
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
-// @description  使用北京时间 24 小时格式显示时间
+// @version      1.2.0
+// @description  跳过抖音广告、直播
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
 // @updateURL    https://mirror.ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/douyin_skip_ad.user.js
