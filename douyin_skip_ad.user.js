@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         跳过抖音广告
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.1.0
 // @description  使用北京时间 24 小时格式显示时间
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -43,7 +43,7 @@
                 <span class="xgplayer-setting-title" skip-config>配置</span>
             </div>
         </div>
-        <div class="xgTips"></div>
+        <div class="xgTips"><br></div>
         `
             for (const item of configxgIcon) {
                 let icon = `
@@ -73,27 +73,16 @@
                     }
                 }
                 xgIcon.onmouseover = () => {
-                    xgTips.style.display = "block";
                     clearTimeout(tHide);
+                    xgTips.style.display = "block";
+                }
+                xgIcon.onmouseleave = () => {
                     tHide = setTimeout(function () {
                         xgTips.style.display = "none";
                     }, 2000);
                 }
-                xgIcon.onmouseleave = () => {
-
-                }
                 xgTips.onclick = (e) => {
                     e.stopPropagation()
-                    let item = e.target
-                    if (item.nodeName == "BUTTON") {
-                        if (item.dataset.type == "filter") {
-                            if (item.ariaChecked == "true") {
-                                listModule.style.display = "block"
-                                setTimeout(() => { listModule.style.opacity = "1" }, 50);
-                            }
-                        }
-                        addStyle(item.dataset.type, item.ariaChecked)
-                    }
                 }
                 xgTips.appendChild(iconitem)
             }
