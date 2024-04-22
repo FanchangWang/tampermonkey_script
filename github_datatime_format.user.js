@@ -1,23 +1,29 @@
 // ==UserScript==
 // @name         Github 显示 24 小时时间格式
 // @namespace    http://tampermonkey.net/
-// @version      1.4.0
+// @version      1.5.0
 // @description  使用北京时间 24 小时格式显示时间
 // @icon         https://github.com/fluidicon.png
 // @author       guyuexuan
 // @license      MIT
 // @updateURL    https://mirror.ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/github_datatime_format.user.js
 // @downloadURL  https://mirror.ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/github_datatime_format.user.js
-// @match        *://github.com/*
-// @match        *://kgithub.com/*
-// @match        *://hub.fgit.ml/*
-// @match        *://hub.fgit.gq/*
+// @match        https://github.com/*
 // @run-at       document-idle
 // @grant        none
 // ==/UserScript==
 
 (function () {
     'use strict';
+
+    let flag = 0;
+
+    /**
+     * 格式化日期时间
+     * 
+     * @param {string} datetimeString 
+     * @returns 
+     */
     function formatDateTime(datetimeString) {
         const dateTime = new Date(datetimeString);
         const now = new Date();
@@ -39,18 +45,27 @@
         }
     }
 
-    // 修改页面中已有的时间格式
+    /**
+     * 遍历 relative-time 元素并修改显示时间格式
+     */
     const applyDateTimeFormat = () => {
-        document.querySelectorAll(`relative-time`).forEach((item) => {
-            item.shadowRoot.textContent = formatDateTime(item.datetime.toString())
-        });
+        if (flag == 0) {
+            flag = 1;
+            setTimeout(() => {
+                document.querySelectorAll(`relative-time`).forEach((item) => {
+                    item.shadowRoot.textContent = formatDateTime(item.datetime.toString())
+                });
+                flag = 0;
+            }, 1000)
+        }
+
     }
+
+    applyDateTimeFormat();
 
     // 监听 Github 页面的主体区域，动态添加的评论等内容会在这里
     const observer = new MutationObserver((mutations) => {
-        setTimeout(() => {
-            applyDateTimeFormat();
-        }, 1000)
+        applyDateTimeFormat();
     });
     observer.observe(document, {
         childList: true,
