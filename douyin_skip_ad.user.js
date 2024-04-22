@@ -223,8 +223,12 @@
         if (!descElement) {
             return;
         }
-        if (checkAd(descElement) || checkShop(rootElement)) {
-            nextVideo("广告或购物");
+        if (checkAd(descElement)) {
+            nextVideo("广告");
+            return;
+        }
+        if (checkShop(rootElement)) {
+            nextVideo("购物");
             return;
         }
         if (configxgIcon[3].option) { // 清屏
