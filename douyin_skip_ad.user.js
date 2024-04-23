@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         跳过抖音广告、直播
 // @namespace    http://tampermonkey.net/
-// @version      1.4.0
+// @version      1.5.0
 // @description  跳过抖音广告、直播，支持配置保存
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -209,11 +209,7 @@
             nextVideo("直播");
             return;
         }
-        let descElement = rootElement.querySelector('div.basicPlayer'); // 直播 描述元素
-        if (!descElement) {
-            return;
-        }
-        if (checkAd(descElement)) {
+        if (checkAd(rootElement)) {
             nextVideo("广告");
         }
     }
@@ -246,12 +242,20 @@
         if (rootElement) {
             procSkipVideo(rootElement);
         } else {
-            rootElement = document.querySelector('div.dySwiperSlide div[data-e2e="feed-live"]');
-            if (rootElement) {
-                procSkipLive(rootElement);
-            } else {
-                return;
-            }
+            /** @type {number} 计数器，防止检测不到元素一直循环 */
+            let counter = 0;
+            const timerWaitLivePlaying = setInterval(() => {
+                // 定位到正在播放中的直播播放器
+                rootElement = document.querySelector('div.dySwiperSlide div[data-e2e="feed-live"] div.basicPlayer.xgplayer-playing');
+                if (rootElement) {
+                    clearInterval(timerWaitLivePlaying);
+                    procSkipLive(rootElement);
+                } else {
+                    if (counter++ > 5) {
+                        clearInterval(timerWaitLivePlaying);
+                    }
+                }
+            }, 300);
         }
     }
 
@@ -264,7 +268,8 @@
         let rootElement; // 视频/直播 根元素
         rootElement = document.querySelector('div.dySwiperSlide div[data-e2e="feed-active-video"]');
         if (!rootElement) {
-            rootElement = document.querySelector('div.dySwiperSlide div[data-e2e="feed-live"]');
+            // 定位到正在播放中的直播播放器
+            rootElement = document.querySelector('div.dySwiperSlide div[data-e2e="feed-live"] div.basicPlayer.xgplayer-playing');
         }
         return rootElement;
     }
@@ -280,28 +285,27 @@
                     // 获取元素样式
                     let style = mutation.target.style;
                     let match;
-                    /** @type {string} */
-                    let lastTransitionDuration = '';
                     if (mutation.oldValue) {
                         match = mutation.oldValue.match(/transition-duration: ([0-9ms]+);/);
                         if (match) {
-                            lastTransitionDuration = match[1];
+                            /** @type {string} */
+                            const lastTransitionDuration = match[1];
+                            if (lastTransitionDuration != "250ms") { // 存在旧值的时候需要判断
+                                return;
+                            }
                         }
                     }
                     if (style.transitionDuration != "0ms") {
                         return;
                     }
-                    if (lastTransitionDuration) { // 存在旧值的时候需要判断
-                        if (lastTransitionDuration != "250ms") {
-                            return;
-                        }
-                    }
                     match = style.transform.match(/translate3d\(-?\d+px, (-?\d+)px, -?\d+px\)/);
                     if (match) {
                         let newTranslateValue = parseInt(match[1]);
                         if (newTranslateValue < lastTranslateValue) {
-                            lastTranslateValue = newTranslateValue;
                             skipMain();
+                        }
+                        if (lastTranslateValue != newTranslateValue) {
+                            lastTranslateValue = newTranslateValue;
                         }
                     }
                 }
