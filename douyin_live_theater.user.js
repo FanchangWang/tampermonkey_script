@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         抖音直播网页全屏、原画
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
-// @description  抖音直播自动开启网页全屏、自动切换原画
+// @version      1.1.0
+// @description  抖音直播自动开启网页全屏、自动切换原画、关闭礼物特效、关闭弹幕
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
 // @license      MIT
@@ -16,45 +16,65 @@
 (function () {
     'use strict';
 
+    /** @type {{ theater: Element | null, gift: Element | null, danmu: Element | null, quality: Element | null }} */
+    let buttonList = { theater: null, gift: null, danmu: null, quality: null };
+
     /**
      * 获取网页全屏按钮
      * 
      * @returns {Element|null}
      */
-    function getTheaterButton() {
-        const xgIconElements = document.querySelectorAll('xg-right-grid xg-icon');
-        for (const xgIconNode of xgIconElements) {
-            const divElements = xgIconNode.querySelectorAll('div');
-            const isTheaterNode = Array.from(divElements).some(function (divNode) {
-                return divNode.textContent.trim() === '网页全屏';
-            });
-            if (isTheaterNode) {
-                for (const divNode of divElements) {
-                    if (divNode.firstElementChild && divNode.firstElementChild.tagName === 'svg') {
-                        return divNode;
+    function getButtonList() {
+        let isTheaterNode = false;
+        let isGiftNode = false;
+        let targetNode = null;
+
+        if (!buttonList.quality) {
+            const qualityParent = document.querySelector('div[data-e2e="quality-selector"]');
+            if (qualityParent) {
+                for (const divNode of qualityParent.childNodes) {
+                    if (divNode.textContent.trim() === '原画') {
+                        buttonList.quality = divNode;
+                        break;
                     }
                 }
             }
         }
-        return null;
-    }
-
-    /**
-     * 获取原画按钮
-     * 
-     * @returns {Element|null}
-     */
-    function getQualityButton() {
-        const qualityParent = document.querySelector('div[data-e2e="quality-selector"]');
-        if (qualityParent) {
-            const divElements = qualityParent.childNodes;
+        if (!buttonList.quality) {
+            return false;
+        }
+        const xgIconElements = document.querySelectorAll('xg-right-grid xg-icon');
+        for (const xgIconNode of xgIconElements) {
+            isTheaterNode = false;
+            isGiftNode = false;
+            targetNode = null;
+            const divElements = xgIconNode.querySelectorAll('div');
             for (const divNode of divElements) {
-                if (divNode.textContent.trim() === '原画') {
-                    return divNode;
+                if (divNode.textContent.trim() === '网页全屏') {
+                    isTheaterNode = true;
+                }
+                if (divNode.textContent.trim() === '屏蔽礼物特效') {
+                    isGiftNode = true;
+                }
+                if (divNode.textContent.trim() === '关闭弹幕') {
+                    buttonList.danmu = divNode;
+                    break;
+                }
+                if (divNode.firstElementChild && divNode.firstElementChild.tagName === 'svg') {
+                    targetNode = divNode;
                 }
             }
+            if (isTheaterNode && targetNode) {
+                buttonList.theater = targetNode;
+            }
+            if (isGiftNode && targetNode) {
+                buttonList.gift = targetNode;
+            }
+            if (buttonList.theater && buttonList.gift && buttonList.danmu) {
+                return true;
+            }
         }
-        return null;
+        return false;
     }
 
     /** @type {RegExp} */
@@ -62,26 +82,16 @@
     if (regex.test(window.location.pathname)) {
         /** @type {number} 计数器，防止检测不到元素一直循环 */
         let counter = 0;
-        const timerTheater = setInterval(() => {
-            const theaterButton = getTheaterButton();
-            if (theaterButton) {
-                theaterButton.click();
-                clearInterval(timerTheater);
-                counter = 0;
-                const timerQuality = setInterval(() => {
-                    const qualityButton = getQualityButton();
-                    if (qualityButton) {
-                        qualityButton.click();
-                        clearInterval(timerQuality);
-                    } else {
-                        if (counter++ > 20) {
-                            clearInterval(timerQuality);
-                        }
-                    }
-                }, 300);
+        const timerButtonList = setInterval(() => {
+            if (getButtonList()) {
+                clearInterval(timerButtonList);
+                buttonList.theater.click();
+                buttonList.gift.click();
+                buttonList.danmu.click();
+                buttonList.quality.click();
             } else {
                 if (counter++ > 20) {
-                    clearInterval(timerTheater);
+                    clearInterval(timerButtonList);
                 }
             }
         }, 300);
