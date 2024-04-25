@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         跳过抖音广告、直播
 // @namespace    http://tampermonkey.net/
-// @version      1.5.0
+// @version      1.6.0
 // @description  跳过抖音广告、直播，支持配置保存
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -78,9 +78,12 @@
      * 打开清屏
      */
     function openImmersive() {
-        let playerElement = document.querySelector('div.dySwiperSlide div[data-e2e="feed-active-video"] div.basePlayerContainer');
-        if (playerElement) {
-            playerElement.classList.add("immersive-player-switch-on", "immersive-player-switch-on-hide-video-info");
+        var immersiveSwitchButton = document.querySelector('div.dySwiperSlide div[data-e2e="feed-active-video"] div.basePlayerContainer xg-icon.immersive-switch button');
+        if (immersiveSwitchButton) {
+            var hasClass = immersiveSwitchButton.classList.contains('xg-switch-checked');
+            if (!hasClass) {
+                immersiveSwitchButton.click();
+            }
         }
     }
 
@@ -88,9 +91,12 @@
      * 关闭清屏
      */
     function closeImmersive() {
-        let playerElement = document.querySelector('div.dySwiperSlide div[data-e2e="feed-active-video"] div.basePlayerContainer');
-        if (playerElement) {
-            playerElement.classList.remove("immersive-player-switch-on", "immersive-player-switch-on-hide-video-info");
+        var immersiveSwitchButton = document.querySelector('div.dySwiperSlide div[data-e2e="feed-active-video"] div.basePlayerContainer xg-icon.immersive-switch button');
+        if (immersiveSwitchButton) {
+            var hasClass = immersiveSwitchButton.classList.contains('xg-switch-checked');
+            if (hasClass) {
+                immersiveSwitchButton.click();
+            }
         }
     }
 
