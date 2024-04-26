@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         抖音直播网页全屏、原画
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
+// @version      1.2.0
 // @description  抖音直播自动开启网页全屏、自动切换原画、关闭礼物特效、关闭弹幕
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -10,11 +10,45 @@
 // @downloadURL  https://mirror.ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/douyin_live_theater.user.js
 // @match        https://live.douyin.com/*
 // @run-at       document-idle
-// @grant        none
+// @grant        GM_registerMenuCommand
+// @grant        GM_getValue
+// @grant        GM_setValue
 // ==/UserScript==
 
 (function () {
     'use strict';
+
+    /** @type [{id: string | number | null, key: string, title: string, val: boolean }] */
+    let menuAll = [
+        { id: null, key: "menu_theater", title: "网页全屏", val: true },
+        { id: null, key: "menu_gift", title: "礼物特效", val: true },
+        { id: null, key: "menu_danmu", title: "弹幕", val: true },
+        { id: null, key: "menu_quality", title: "原画", val: true },
+    ];
+
+    /**
+     * 遍历注册菜单
+     */
+    menuAll.forEach(item => {
+        item.val = GM_getValue(item.key, item.val);
+        item.id = GM_registerMenuCommand(`${item.val ? '✅' : '❌'} ${item.title}`, () => callbackMenu(item.key, item.val));
+    });
+
+    /**
+     * 菜单点击回调
+     * 
+     * @param {MouseEvent | KeyboardEvent} event 
+     */
+    function callbackMenu(key, val) {
+        menuAll.forEach(item => {
+            if (item.key === key) {
+                item.val = !val;
+                GM_setValue(key, item.val);
+                item.id = GM_registerMenuCommand(`${item.val ? '✅' : '❌'} ${item.title}`, () => callbackMenu(item.key, item.val), { id: item.id });
+                return;
+            }
+        });
+    }
 
     /** @type {{ theater: Element | null, gift: Element | null, danmu: Element | null, quality: Element | null }} */
     let buttonList = { theater: null, gift: null, danmu: null, quality: null };
@@ -85,10 +119,32 @@
         const timerButtonList = setInterval(() => {
             if (getButtonList()) {
                 clearInterval(timerButtonList);
-                buttonList.theater.click();
-                buttonList.gift.click();
-                buttonList.danmu.click();
-                buttonList.quality.click();
+                menuAll.forEach(item => {
+                    switch (item.key) {
+                        case 'menu_theater':
+                            if (item.val) {
+                                buttonList.theater.click();
+                            }
+                            break;
+                        case 'menu_gift':
+                            if (item.val) {
+                                buttonList.gift.click();
+                            }
+                            break;
+                        case 'menu_danmu':
+                            if (item.val) {
+                                buttonList.danmu.click();
+                            }
+                            break;
+                        case 'menu_quality':
+                            if (item.val) {
+                                buttonList.quality.click();
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                });
             } else {
                 if (counter++ > 20) {
                     clearInterval(timerButtonList);
