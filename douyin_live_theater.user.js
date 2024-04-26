@@ -37,7 +37,8 @@
     /**
      * 菜单点击回调
      * 
-     * @param {MouseEvent | KeyboardEvent} event 
+     * @param {string} key 
+     * @param {boolean} val 
      */
     function callbackMenu(key, val) {
         menuAll.forEach(item => {
