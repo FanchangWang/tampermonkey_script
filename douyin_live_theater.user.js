@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         抖音直播网页全屏、原画
 // @namespace    http://tampermonkey.net/
-// @version      1.2.0
+// @version      1.3.0
 // @description  抖音直播自动开启网页全屏、自动切换原画、关闭礼物特效、关闭弹幕
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -20,10 +20,10 @@
 
     /** @type [{id: string | number | null, key: string, title: string, val: boolean }] */
     let menuAll = [
-        { id: null, key: "menu_theater", title: "网页全屏", val: true },
-        { id: null, key: "menu_gift", title: "礼物特效", val: true },
-        { id: null, key: "menu_danmu", title: "弹幕", val: true },
-        { id: null, key: "menu_quality", title: "原画", val: true },
+        { id: null, key: "menu_theater", title: "自动网页全屏", val: true },
+        { id: null, key: "menu_gift", title: "关闭礼物特效", val: true },
+        { id: null, key: "menu_danmu", title: "关闭所有弹幕", val: true },
+        { id: null, key: "menu_quality", title: "自动原画", val: true },
     ];
 
     /**
@@ -85,7 +85,7 @@
             targetNode = null;
             const divElements = xgIconNode.querySelectorAll('div');
             for (const divNode of divElements) {
-                if (divNode.textContent.trim() === '网页全屏') {
+                if (divNode.textContent.trim().includes('网页全屏')) {
                     isTheaterNode = true;
                 }
                 if (divNode.textContent.trim() === '屏蔽礼物特效') {
