@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         跳过抖音广告、直播
 // @namespace    http://tampermonkey.net/
-// @version      1.8.0
+// @version      1.8.1
 // @description  跳过抖音广告、直播，支持配置保存
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -233,7 +233,7 @@
         if (!descElement) {
             return;
         }
-        if (checkAd(descElement) || checkAccountAd(descElement)) {
+        if (checkAd(descElement) || checkAccountAd(rootElement)) {
             nextVideo("广告");
             return;
         }
