@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         抖音直播网页全屏、原画
 // @namespace    http://tampermonkey.net/
-// @version      1.3.0
-// @description  抖音直播自动开启网页全屏、自动切换原画、关闭礼物特效、关闭弹幕
+// @version      1.4.1
+// @description  抖音直播自动开启网页全屏、自动切换原画、关闭礼物特效、关闭弹幕、关闭礼物面板
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
 // @license      MIT
@@ -24,6 +24,7 @@
         { id: null, key: "menu_gift", title: "关闭礼物特效", val: true },
         { id: null, key: "menu_danmu", title: "关闭所有弹幕", val: true },
         { id: null, key: "menu_quality", title: "自动原画", val: true },
+        { id: null, key: "menu_gift_panel", title: "关闭礼物面板", val: true },
     ];
 
     /**
@@ -51,8 +52,8 @@
         });
     }
 
-    /** @type {{ theater: Element | null, gift: Element | null, danmu: Element | null, quality: Element | null }} */
-    let buttonList = { theater: null, gift: null, danmu: null, quality: null };
+    /** @type {{ theater: Element | null, gift: Element | null, danmu: Element | null, quality: Element | null, giftPanel: Element | null }} */
+    let buttonList = { theater: null, gift: null, danmu: null, quality: null, giftPanel: null };
 
     /**
      * 获取网页全屏按钮
@@ -76,6 +77,16 @@
             }
         }
         if (!buttonList.quality) {
+            return false;
+        }
+        const giftPanelEntranceElement = document.querySelector('div#giftPanelEntrance');
+        if (giftPanelEntranceElement) {
+            const giftPanelBarElement = giftPanelEntranceElement.closest('div.gitBarOptimizeEnabled');
+            if (giftPanelBarElement) {
+                buttonList.giftPanel = giftPanelBarElement.parentElement;
+            }
+        }
+        if (!buttonList.giftPanel) {
             return false;
         }
         const xgIconElements = document.querySelectorAll('xg-right-grid xg-icon');
@@ -142,6 +153,10 @@
                                 buttonList.quality.click();
                             }
                             break;
+                        case 'menu_gift_panel':
+                            if (item.val) {
+                                buttonList.giftPanel.style.display = 'none';
+                            }
                         default:
                             break;
                     }
