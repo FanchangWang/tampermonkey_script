@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         跳过抖音广告、直播
 // @namespace    http://tampermonkey.net/
-// @version      1.7.0
+// @version      1.8.0
 // @description  跳过抖音广告、直播，支持配置保存
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -209,13 +209,13 @@
     }
 
     /**
-     * 检查是否是隐藏 Ad （某个上级元素被 display: none !important 隐藏）
+     * 检查账号 svg 广告
      * 
      * @param {Element} descElement 
      * @returns 
      */
-    function checkHideAd(descElement) {
-        return descElement.closest('[style*="display: none !important;"]') != null;
+    function checkAccountAd(rootElement) {
+        return rootElement.querySelector('div.video-info-detail div.account svg') != null; // 视频 账号元素下的广告 svg
     }
 
     function procSkipLive(rootElement) {
@@ -233,7 +233,7 @@
         if (!descElement) {
             return;
         }
-        if (checkAd(descElement) || checkHideAd(descElement)) {
+        if (checkAd(descElement) || checkAccountAd(descElement)) {
             nextVideo("广告");
             return;
         }
