@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         抖音直播网页全屏、原画
 // @namespace    http://tampermonkey.net/
-// @version      1.4.1
+// @version      1.5.0
 // @description  抖音直播自动开启网页全屏、自动切换原画、关闭礼物特效、关闭弹幕、关闭礼物面板
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -116,9 +116,9 @@
             if (isGiftNode && targetNode) {
                 buttonList.gift = targetNode;
             }
-            if (buttonList.theater && buttonList.gift && buttonList.danmu) {
-                return true;
-            }
+        }
+        if (buttonList.theater && buttonList.gift) {
+            return true;
         }
         return false;
     }
@@ -144,7 +144,7 @@
                             }
                             break;
                         case 'menu_danmu':
-                            if (item.val) {
+                            if (item.val && buttonList.danmu) {
                                 buttonList.danmu.click();
                             }
                             break;
