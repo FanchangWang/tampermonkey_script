@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Github 显示 24 小时时间格式
 // @namespace    http://tampermonkey.net/
-// @version      1.5.0
+// @version      1.6.0
 // @description  使用北京时间 24 小时格式显示时间
 // @icon         https://github.com/fluidicon.png
 // @author       guyuexuan
@@ -10,7 +10,6 @@
 // @downloadURL  https://mirror.ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/github_datatime_format.user.js
 // @match        https://github.com/*
 // @run-at       document-idle
-// @grant        none
 // ==/UserScript==
 
 (function () {
@@ -55,10 +54,14 @@
                 document.querySelectorAll(`relative-time`).forEach((item) => {
                     item.shadowRoot.textContent = formatDateTime(item.datetime.toString())
                 });
+                document.querySelectorAll('h3[data-testid="commit-group-title"]').forEach((item) => {
+                    if (item.textContent.includes('Commits on ')) {
+                        item.textContent = '提交时间 ' + formatDateTime(item.textContent.replace('Commits on ', ''))
+                    }
+                })
                 flag = 0;
             }, 1000)
         }
-
     }
 
     applyDateTimeFormat();
