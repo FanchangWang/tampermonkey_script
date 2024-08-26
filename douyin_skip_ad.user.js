@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         跳过抖音广告、直播
 // @namespace    http://tampermonkey.net/
-// @version      2.0.1
+// @version      2.0.2
 // @description  跳过抖音广告、直播，支持配置保存
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -34,6 +34,7 @@
      * @property {MenuProp} list_skip_ad - 滑动列表：跳过广告。
      * @property {MenuProp} list_skip_shop - 滑动列表：跳过购物。
      * @property {MenuProp} list_skip_live - 滑动列表：跳过直播。
+     * @property {MenuProp} list_set_page_full_screen - 滑动列表：网页全屏。
      * @property {MenuProp} list_set_clarity - 滑动列表：高清画质。
      * @property {MenuProp} list_set_immersive - 滑动列表：开启清屏。
      * @property {MenuProp} child_live_gift - 内嵌直播：关闭礼物特效。
@@ -46,6 +47,7 @@
         "list_skip_ad": { id: "", title: "滑动列表：跳过广告", val: true },
         "list_skip_shop": { id: "", title: "滑动列表：跳过购物", val: true },
         "list_skip_live": { id: "", title: "滑动列表：跳过直播", val: false },
+        "list_set_page_full_screen": { id: "", title: "滑动列表：网页全屏", val: false },
         "list_set_clarity": { id: "", title: "滑动列表：高清画质", val: true },
         "list_set_immersive": { id: "", title: "滑动列表：开启清屏", val: false },
 
@@ -95,6 +97,7 @@
      * @property {boolean} skipAdCompleted 跳过广告 默认 false
      * @property {boolean} skipShopCompleted 跳过购物 默认 false
      * @property {boolean} skipLiveCompleted 跳过直播 默认 false
+     * @property {boolean} setPageFullScreenCompleted 网页全屏是否处理完成 默认 false
      * @property {boolean} setClarityCompleted 画质是否处理完成 默认 false
      * @property {boolean} setImmersiveCompleted 清屏是否处理完成 默认 false
      */
@@ -116,7 +119,7 @@
      * @param {string} xgplayerid 
      */
     function initNewXgplayerid(xgplayerid) {
-        slideVideoObj = { [xgplayerid]: { id: xgplayerid, completed: false, needSkip: false, skipAdCompleted: false, skipShopCompleted: false, skipLiveCompleted: false, setClarityCompleted: false, setImmersiveCompleted: false } };
+        slideVideoObj = { [xgplayerid]: { id: xgplayerid, completed: false, needSkip: false, skipAdCompleted: false, skipShopCompleted: false, skipLiveCompleted: false, setPageFullScreenCompleted: false, setClarityCompleted: false, setImmersiveCompleted: false } };
         if (!historyXgplayeridList.some(item => item === xgplayerid)) {
             historyXgplayeridList.push(xgplayerid);
             if (historyXgplayeridList.length > 5) { // 只保留 5 个旧值
@@ -402,16 +405,32 @@
             }
         }
 
-        if (slideVideoObj[xgplayerid].setClarityCompleted) { // 画质高清设置完毕
+        if (!slideVideoObj[xgplayerid].setPageFullScreenCompleted) { // 网页全屏
+            if (menuList.list_set_page_full_screen.val) {
+                const pageFullScreenElement = rootElement.querySelector("xg-icon.xgplayer-page-full-screen"); // 网页全屏
+                if (pageFullScreenElement) {
+                    if (pageFullScreenElement.textContent.startsWith("退出网页全屏")) { // 过滤文本状态  网页全屏/退出网页全屏
+                        slideVideoObj[xgplayerid].setPageFullScreenCompleted = true;
+                    } else if (pageFullScreenElement.textContent.startsWith("网页全屏")) { // 过滤文本状态  网页全屏/退出网页全屏
+                        pageFullScreenElement.querySelector("div.xgplayer-icon")?.click(); // 考虑到异步执行 click 可能会延迟，所以暂时不修改完成标志位，等下次判断再说
+                    }
+                }
+            } else {
+                slideVideoObj[xgplayerid].setPageFullScreenCompleted = true;
+            }
+        }
+
+        if (slideVideoObj[xgplayerid].setClarityCompleted) { // 画质高清 设置完毕
             if (!slideVideoObj[xgplayerid].skipAdCompleted) { // 广告 // 画质比广告判断慢 // 说明发现不了广告，也就是这并不是广告视频
                 slideVideoObj[xgplayerid].skipAdCompleted = true;
             }
             if (!slideVideoObj[xgplayerid].skipShopCompleted) { // 购物 // 画质比购物判断慢// 说明发现不了购物，也就是这并不是购物视频
                 slideVideoObj[xgplayerid].skipShopCompleted = true;
             }
-
-            if (slideVideoObj[xgplayerid].setImmersiveCompleted) { // 清屏设置完毕
-                slideVideoObj[xgplayerid].completed = true;
+            if (slideVideoObj[xgplayerid].setImmersiveCompleted) { // 清屏 设置完毕
+                if (slideVideoObj[xgplayerid].setPageFullScreenCompleted) { // 网页全屏 设置完毕
+                    slideVideoObj[xgplayerid].completed = true;
+                }
             }
         }
     }
