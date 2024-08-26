@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         跳过抖音广告、直播
 // @namespace    http://tampermonkey.net/
-// @version      2.0.0
+// @version      2.0.1
 // @description  跳过抖音广告、直播，支持配置保存
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -134,6 +134,56 @@
         return historyXgplayeridList.some((item, idx, arr) => item === xgplayerid && idx !== (arr.length - 1));
     }
 
+    // 创建样式表
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        #toast-container {
+            position: fixed;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+      .toast {
+            background-color: #6a6a6a;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            opacity: 1;
+            transition: opacity 3s ease-in-out;
+        }
+    `;
+    // 将样式表添加到文档中
+    document.head.appendChild(styleSheet);
+
+    // 创建 toast 容器
+    const toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    document.body.appendChild(toastContainer);
+
+    /**
+     * 显示 toast 消息
+     * @param {string} msg 
+     */
+    function toast(msg) {
+        const toastItem = document.createElement('div');
+        toastItem.textContent = "💬 " + msg;
+        toastItem.classList.add('toast');
+        toastContainer.appendChild(toastItem);
+
+        setTimeout(() => {
+            toastItem.style.opacity = '0';
+            setTimeout(() => {
+                toastItem.remove();
+            }, 500);
+        }, 3000);
+    }
+
+    toast("脚本：已启动~");
+
     /**
      * 点击下一个视频
      * @param {string|null} msg 
@@ -159,6 +209,7 @@
                 } else {
                     if (msg) {
                         // GM_log("直播: nextLive 自动跳过 " + msg, xgplayerid, newPlayerNode.dataset.xgplayerid);
+                        toast("直播: 跳过 " + msg);
                     } else {
                         // GM_log("直播: nextLive 再次尝试执行跳过操作", xgplayerid, newPlayerNode.dataset.xgplayerid);
                     }
@@ -246,6 +297,7 @@
                 } else {
                     if (msg) {
                         // GM_log("视频: nextVideo 自动跳过 " + msg, xgplayerid, newPlayerNode.dataset.xgplayerid);
+                        toast("视频: 跳过 " + msg);
                     } else {
                         // GM_log("视频: nextVideo 再次尝试执行跳过操作", xgplayerid, newPlayerNode.dataset.xgplayerid);
                     }
