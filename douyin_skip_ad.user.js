@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         跳过抖音广告、直播
 // @namespace    http://tampermonkey.net/
-// @version      2.0.4
+// @version      2.0.5
 // @description  跳过抖音广告、直播，支持配置保存
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -31,6 +31,7 @@
     /**
      * GM 菜单注册列表
      * @type {{[key: string]: MenuProp}}
+     * @property {MenuProp} toast_switch - toast 开关。
      * @property {MenuProp} list_skip_ad - 滑动列表：跳过广告。
      * @property {MenuProp} list_skip_shop - 滑动列表：跳过购物。
      * @property {MenuProp} list_skip_live - 滑动列表：跳过直播。
@@ -42,8 +43,10 @@
      * @property {MenuProp} child_live_quality - 内嵌直播：开启原画画质。
      * @property {MenuProp} child_live_gift_panel - 内嵌直播：关闭礼物面板。
      * @property {MenuProp} child_live_theater - 内嵌直播：自动网页全屏。
+     * @property {MenuProp} child_live_chatroom - 内嵌直播：自动关闭聊天。
      */
     let menuList = {
+        "toast_switch": { id: "", title: "是否开启 toast 提示", val: true },
         "list_skip_ad": { id: "", title: "滑动列表：跳过广告", val: true },
         "list_skip_shop": { id: "", title: "滑动列表：跳过购物", val: true },
         "list_skip_live": { id: "", title: "滑动列表：跳过直播", val: false },
@@ -56,6 +59,7 @@
         "child_live_quality": { id: "", title: "内嵌直播：开启原画画质", val: true },
         "child_live_gift_panel": { id: "", title: "内嵌直播：关闭礼物面板", val: true },
         "child_live_theater": { id: "", title: "内嵌直播：自动网页全屏", val: false },
+        "child_live_chatroom": { id: "", title: "内嵌直播：自动关闭聊天", val: false },
     };
 
     /** 删除旧版脚本配置的存储值 */
@@ -173,6 +177,9 @@
      * @param {string} msg 
      */
     function toast(msg) {
+        if (!menuList.toast_switch.val) {
+            return;
+        }
         const toastItem = document.createElement('div');
         toastItem.textContent = "💬 " + msg;
         toastItem.classList.add('toast');
@@ -486,45 +493,39 @@
     });
 
     /**
+     * @typedef {Object} childLiveProp 内嵌直播 属性
+     * @property {boolean} giftCompleted 礼物特效 处理完毕
+     * @property {boolean} danmuCompleted 弹幕 处理完毕
+     * @property {boolean} qualityCompleted 原画 处理完毕
+     * @property {boolean} giftPanelCompleted 礼物面板 处理完毕
+     * @property {boolean} theaterCompleted 网页全屏 处理完毕
+     * @property {boolean} chatroomCompleted 关闭聊天框 处理完毕
+     */
+
+    /**
      * 处理内嵌直播
      * @param {string} xgplayerid 
      * @param {Element} rootElement 
      */
     function procChildLive(xgplayerid, rootElement) {
-
         // GM_log("procChildLive 内嵌直播", xgplayerid);
 
-        let completed = true; // 是否已全部处理完毕
+        /** @type {childLiveProp} 内嵌直播对象 */
+        let childLiveObj = { giftCompleted: false, danmuCompleted: false, qualityCompleted: false, giftPanelCompleted: false, theaterCompleted: false, chatroomCompleted: false };
 
         if (menuList.child_live_gift_panel.val) { // 关闭礼物面板
             const giftPanelElement = rootElement.querySelector('div.gitBarOptimizeEnabled')?.parentElement;
             // GM_log("giftPanelElement", giftPanelElement?.isConnected);
             if (giftPanelElement) {
                 if (giftPanelElement.style.display != "none") {
-                    giftPanelElement.style.display = "none";
-                }
-            } else {
-                completed = false;
-            }
-        }
-
-        if (menuList.child_live_quality.val) { // 开启原画画质
-            if (rootElement.querySelector('div[data-e2e="quality"]')?.textContent != "原画") {
-                const qualityParent = rootElement.querySelector('div[data-e2e="quality-selector"]');
-                if (qualityParent) {
-                    const qualityNode = Array.from(qualityParent.childNodes).find(el => el.textContent.trim() === "原画");
-                    // GM_log("qualityNode", qualityNode?.isConnected);
-                    if (qualityNode) {
-                        qualityNode.click();
-                    } else {
-                        completed = false;
-                    }
+                    giftPanelElement.style.display = "none"; // 关闭礼物面板 // 切换有延迟，等下一轮再判断是否切换成功
                 } else {
-                    completed = false;
+                    childLiveObj.giftPanelCompleted = true;
                 }
             }
+        } else {
+            childLiveObj.giftPanelCompleted = true;
         }
-
 
         if (menuList.child_live_danmu.val) { // 关闭所有弹幕
             const danmuNode = rootElement.querySelector("xg-icon.danmu-icon"); // 关闭弹幕 节点
@@ -533,19 +534,17 @@
                 const danmuTipsNode = danmuNode.querySelector("div.xg-tips");
                 if (danmuTipsNode) {
                     if (danmuTipsNode.textContent === "关闭弹幕") { // 字符串状态判断   关闭弹幕/开启弹幕
-                        danmuNode.click();
+                        danmuNode.click(); // 点击关闭弹幕 // 切换有延迟，等下一轮再判断是否切换成功
+                    } else if (danmuTipsNode.textContent === "开启弹幕") {
+                        childLiveObj.danmuCompleted = true;
                     }
-                } else {
-                    completed = false;
                 }
-            } else {
-                completed = false;
             }
-
+        } else {
+            childLiveObj.danmuCompleted = true;
         }
 
         const xgIconElements = rootElement.querySelectorAll("xg-right-grid xg-icon");
-
         if (menuList.child_live_gift.val) { // 屏蔽礼物特效
             const theaterXgIconNode = Array.from(xgIconElements).find(el => el.textContent.includes("礼物特效")); // 礼物特效 xg-icon 节点
             if (theaterXgIconNode) {
@@ -553,14 +552,14 @@
                     const theaterNode = theaterXgIconNode.querySelector("svg")?.parentElement;
                     // GM_log("theaterNode", theaterNode?.isConnected);
                     if (theaterNode) {
-                        theaterNode.click();
-                    } else {
-                        completed = false;
+                        theaterNode.click(); // 点击关闭礼物特效 // 切换有延迟，等下一轮再判断是否切换成功
                     }
+                } else if (theaterXgIconNode.textContent.startsWith("开启礼物特效")) {
+                    childLiveObj.giftCompleted = true;
                 }
-            } else {
-                completed = false;
             }
+        } else {
+            childLiveObj.giftCompleted = true;
         }
 
         if (menuList.child_live_theater.val) { // 自动网页全屏
@@ -570,17 +569,55 @@
                     const giftNode = theaterXgIconNode.querySelector("svg")?.parentElement; // 网页全屏 节点
                     // GM_log("giftNode", giftNode?.isConnected);
                     if (giftNode) {
-                        giftNode.click();
+                        giftNode.click(); // 点击网页全屏 // 切换有延迟，等下一轮再判断是否切换成功
+                    }
+                } else if (theaterXgIconNode.textContent.startsWith("退出网页全屏")) {
+                    childLiveObj.theaterCompleted = true;
+                }
+            }
+        } else {
+            childLiveObj.theaterCompleted = true;
+        }
+
+        if (menuList.child_live_chatroom.val) { // 自动关闭聊天
+            const chatroomNode = rootElement.querySelector("div#chatroom");
+            if (chatroomNode) {
+                if (parseInt(window.getComputedStyle(chatroomNode).getPropertyValue('flex-basis')) > 0) { // 判断值  0px=隐藏聊天框 360px=显示聊天框（最好是判断 > 0px 即可，防止不同尺寸屏幕值不同）
+                    const chatroomCloseNode = chatroomNode.querySelector("div.chatroom_close");
+                    if (chatroomCloseNode) {
+                        chatroomCloseNode.click(); // 点击关闭聊天 // 切换有延迟，等下一轮再判断是否切换成功
+                    }
+                } else {
+                    childLiveObj.chatroomCompleted = true;
+                }
+            }
+        } else {
+            childLiveObj.chatroomCompleted = true;
+        }
+
+        if (childLiveObj.giftCompleted && childLiveObj.danmuCompleted && childLiveObj.giftPanelCompleted && childLiveObj.theaterCompleted && childLiveObj.chatroomCompleted) {
+            if (menuList.child_live_quality.val) { // 开启原画画质
+                const qualityElement = rootElement.querySelector('div[data-e2e="quality"]');
+                if (qualityElement && ["原画", "蓝光", "超清", "高清", "标清", "流畅"].includes(qualityElement.textContent)) {
+                    if (qualityElement.textContent != "原画") {
+                        const qualityParent = rootElement.querySelector('div[data-e2e="quality-selector"]');
+                        if (qualityParent) {
+                            const qualityNode = Array.from(qualityParent.childNodes).find(el => el.textContent.trim() === "原画");
+                            // GM_log("qualityNode", qualityNode?.isConnected);
+                            if (qualityNode) {
+                                qualityNode.click(); // 点击原画 // 切换有延迟，等下一轮再判断是否切换成功
+                            }
+                        }
                     } else {
-                        completed = false;
+                        childLiveObj.qualityCompleted = true;
                     }
                 }
             } else {
-                completed = false;
+                childLiveObj.qualityCompleted = true;
             }
+            return childLiveObj.qualityCompleted;
         }
-
-        return completed;
+        return false;
     }
 
     /** @type {MutationObserver} child live observer */
