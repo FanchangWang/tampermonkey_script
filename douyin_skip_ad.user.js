@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         跳过抖音广告、直播
 // @namespace    http://tampermonkey.net/
-// @version      2.0.5
+// @version      2.0.6
 // @description  跳过抖音广告、直播，支持配置保存
 // @icon         https://p-pc-weboff.byteimg.com/tos-cn-i-9r5gewecjs/favicon.png
 // @author       guyuexuan
@@ -9,6 +9,7 @@
 // @updateURL    https://mirror.ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/douyin_skip_ad.user.js
 // @downloadURL  https://mirror.ghproxy.com/https://raw.githubusercontent.com/FanchangWang/tampermonkey_script/main/douyin_skip_ad.user.js
 // @match        https://www.douyin.com/*
+// @match        https://live.douyin.com/*
 // @run-at       document-idle
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
@@ -44,6 +45,12 @@
      * @property {MenuProp} child_live_gift_panel - 内嵌直播：关闭礼物面板。
      * @property {MenuProp} child_live_theater - 内嵌直播：自动网页全屏。
      * @property {MenuProp} child_live_chatroom - 内嵌直播：自动关闭聊天。
+     * @property {MenuProp} main_live_gift - Live直播：关闭礼物特效。
+     * @property {MenuProp} main_live_danmu - Live直播：关闭所有弹幕。
+     * @property {MenuProp} main_live_quality - Live直播：开启原画画质。
+     * @property {MenuProp} main_live_gift_panel - Live直播：关闭礼物面板。
+     * @property {MenuProp} main_live_theater - Live直播：自动网页全屏。
+     * @property {MenuProp} main_live_chatroom - Live直播：自动关闭聊天。
      */
     let menuList = {
         "toast_switch": { id: "", title: "是否开启 toast 提示", val: true },
@@ -60,6 +67,13 @@
         "child_live_gift_panel": { id: "", title: "内嵌直播：关闭礼物面板", val: true },
         "child_live_theater": { id: "", title: "内嵌直播：自动网页全屏", val: false },
         "child_live_chatroom": { id: "", title: "内嵌直播：自动关闭聊天", val: false },
+
+        "main_live_gift": { id: "", title: "Live直播：关闭礼物特效", val: true },
+        "main_live_danmu": { id: "", title: "Live直播：关闭所有弹幕", val: true },
+        "main_live_quality": { id: "", title: "Live直播：开启原画画质", val: true },
+        "main_live_gift_panel": { id: "", title: "Live直播：关闭礼物面板", val: true },
+        "main_live_theater": { id: "", title: "Live直播：自动网页全屏", val: false },
+        "main_live_chatroom": { id: "", title: "Live直播：自动关闭聊天", val: false },
     };
 
     /** 删除旧版脚本配置的存储值 */
@@ -493,7 +507,7 @@
     });
 
     /**
-     * @typedef {Object} childLiveProp 内嵌直播 属性
+     * @typedef {Object} LiveProp 内嵌直播 属性
      * @property {boolean} giftCompleted 礼物特效 处理完毕
      * @property {boolean} danmuCompleted 弹幕 处理完毕
      * @property {boolean} qualityCompleted 原画 处理完毕
@@ -504,30 +518,31 @@
 
     /**
      * 处理内嵌直播
+     * @param {string} type 
      * @param {string} xgplayerid 
      * @param {Element} rootElement 
      */
-    function procChildLive(xgplayerid, rootElement) {
-        // GM_log("procChildLive 内嵌直播", xgplayerid);
+    function procLive(type, xgplayerid, rootElement) {
+        // GM_log("procLive 直播类型：", type, xgplayerid);
 
-        /** @type {childLiveProp} 内嵌直播对象 */
-        let childLiveObj = { giftCompleted: false, danmuCompleted: false, qualityCompleted: false, giftPanelCompleted: false, theaterCompleted: false, chatroomCompleted: false };
+        /** @type {LiveProp} 内嵌直播对象 */
+        let liveObj = { giftCompleted: false, danmuCompleted: false, qualityCompleted: false, giftPanelCompleted: false, theaterCompleted: false, chatroomCompleted: false };
 
-        if (menuList.child_live_gift_panel.val) { // 关闭礼物面板
+        if ((type == "child" && menuList.child_live_gift_panel.val) || (type == "main" && menuList.main_live_gift_panel.val)) { // 关闭礼物面板
             const giftPanelElement = rootElement.querySelector('div.gitBarOptimizeEnabled')?.parentElement;
             // GM_log("giftPanelElement", giftPanelElement?.isConnected);
             if (giftPanelElement) {
                 if (giftPanelElement.style.display != "none") {
                     giftPanelElement.style.display = "none"; // 关闭礼物面板 // 切换有延迟，等下一轮再判断是否切换成功
                 } else {
-                    childLiveObj.giftPanelCompleted = true;
+                    liveObj.giftPanelCompleted = true;
                 }
             }
         } else {
-            childLiveObj.giftPanelCompleted = true;
+            liveObj.giftPanelCompleted = true;
         }
 
-        if (menuList.child_live_danmu.val) { // 关闭所有弹幕
+        if ((type == "child" && menuList.child_live_danmu.val) || (type == "main" && menuList.main_live_danmu.val)) { // 关闭所有弹幕
             const danmuNode = rootElement.querySelector("xg-icon.danmu-icon"); // 关闭弹幕 节点
             // GM_log("danmuNode", danmuNode?.isConnected);
             if (danmuNode) {
@@ -536,16 +551,16 @@
                     if (danmuTipsNode.textContent === "关闭弹幕") { // 字符串状态判断   关闭弹幕/开启弹幕
                         danmuNode.click(); // 点击关闭弹幕 // 切换有延迟，等下一轮再判断是否切换成功
                     } else if (danmuTipsNode.textContent === "开启弹幕") {
-                        childLiveObj.danmuCompleted = true;
+                        liveObj.danmuCompleted = true;
                     }
                 }
             }
         } else {
-            childLiveObj.danmuCompleted = true;
+            liveObj.danmuCompleted = true;
         }
 
         const xgIconElements = rootElement.querySelectorAll("xg-right-grid xg-icon");
-        if (menuList.child_live_gift.val) { // 屏蔽礼物特效
+        if ((type == "child" && menuList.child_live_gift.val) || (type == "main" && menuList.main_live_gift.val)) { // 屏蔽礼物特效
             const theaterXgIconNode = Array.from(xgIconElements).find(el => el.textContent.includes("礼物特效")); // 礼物特效 xg-icon 节点
             if (theaterXgIconNode) {
                 if (theaterXgIconNode.textContent.startsWith("屏蔽礼物特效")) { // 字符串状态判断   屏蔽礼物特效/开启礼物特效
@@ -555,14 +570,14 @@
                         theaterNode.click(); // 点击关闭礼物特效 // 切换有延迟，等下一轮再判断是否切换成功
                     }
                 } else if (theaterXgIconNode.textContent.startsWith("开启礼物特效")) {
-                    childLiveObj.giftCompleted = true;
+                    liveObj.giftCompleted = true;
                 }
             }
         } else {
-            childLiveObj.giftCompleted = true;
+            liveObj.giftCompleted = true;
         }
 
-        if (menuList.child_live_theater.val) { // 自动网页全屏
+        if ((type == "child" && menuList.child_live_theater.val) || (type == "main" && menuList.main_live_theater.val)) { // 自动网页全屏
             const theaterXgIconNode = Array.from(xgIconElements).find(el => el.textContent.includes("网页全屏")); // 网页全屏 xg-icon 节点
             if (theaterXgIconNode) {
                 if (theaterXgIconNode.textContent.startsWith("网页全屏")) { // 字符串状态判断   网页全屏/退出网页全屏
@@ -572,14 +587,14 @@
                         giftNode.click(); // 点击网页全屏 // 切换有延迟，等下一轮再判断是否切换成功
                     }
                 } else if (theaterXgIconNode.textContent.startsWith("退出网页全屏")) {
-                    childLiveObj.theaterCompleted = true;
+                    liveObj.theaterCompleted = true;
                 }
             }
         } else {
-            childLiveObj.theaterCompleted = true;
+            liveObj.theaterCompleted = true;
         }
 
-        if (menuList.child_live_chatroom.val) { // 自动关闭聊天
+        if ((type == "child" && menuList.child_live_chatroom.val) || (type == "main" && menuList.main_live_chatroom.val)) { // 自动关闭聊天
             const chatroomNode = rootElement.querySelector("div#chatroom");
             if (chatroomNode) {
                 if (parseInt(window.getComputedStyle(chatroomNode).getPropertyValue('flex-basis')) > 0) { // 判断值  0px=隐藏聊天框 360px=显示聊天框（最好是判断 > 0px 即可，防止不同尺寸屏幕值不同）
@@ -588,15 +603,15 @@
                         chatroomCloseNode.click(); // 点击关闭聊天 // 切换有延迟，等下一轮再判断是否切换成功
                     }
                 } else {
-                    childLiveObj.chatroomCompleted = true;
+                    liveObj.chatroomCompleted = true;
                 }
             }
         } else {
-            childLiveObj.chatroomCompleted = true;
+            liveObj.chatroomCompleted = true;
         }
 
-        if (childLiveObj.giftCompleted && childLiveObj.danmuCompleted && childLiveObj.giftPanelCompleted && childLiveObj.theaterCompleted && childLiveObj.chatroomCompleted) {
-            if (menuList.child_live_quality.val) { // 开启原画画质
+        if (liveObj.giftCompleted && liveObj.danmuCompleted && liveObj.giftPanelCompleted && liveObj.theaterCompleted && liveObj.chatroomCompleted) {
+            if ((type == "child" && menuList.child_live_quality.val) || (type == "main" && menuList.main_live_quality.val)) { // 开启原画画质
                 const qualityElement = rootElement.querySelector('div[data-e2e="quality"]');
                 if (qualityElement && ["原画", "蓝光", "超清", "高清", "标清", "流畅"].includes(qualityElement.textContent)) {
                     if (qualityElement.textContent != "原画") {
@@ -609,13 +624,13 @@
                             }
                         }
                     } else {
-                        childLiveObj.qualityCompleted = true;
+                        liveObj.qualityCompleted = true;
                     }
                 }
             } else {
-                childLiveObj.qualityCompleted = true;
+                liveObj.qualityCompleted = true;
             }
-            return childLiveObj.qualityCompleted;
+            return liveObj.qualityCompleted;
         }
         return false;
     }
@@ -647,9 +662,43 @@
 
         if (liveIds.length === 1) {
             // GM_log("child live: 内嵌直播", liveIds[0]);
-            if (procChildLive(liveIds[0], liveNode)) {
+            if (procLive("child", liveIds[0], liveNode)) {
                 observer.disconnect();
                 // GM_log("child live: 内嵌直播", liveIds[0], "procChildLive 处理完毕 observer disconnect");
+            }
+        }
+    });
+
+    /** @type {MutationObserver} main live observer */
+    let observerMainLive = new MutationObserver(function (mutationList, observer) {
+        /** @type {string[]} 直播 xgplayerid list */
+        let liveIds = [];
+        /** @type {Element} 直播 rootElementNode 节点*/
+        let liveNode;
+        mutationList.forEach(function (mutation) {
+            if (mutation.type === 'attributes') {
+                const targetNode = mutation.target;
+                if (targetNode.tagName === 'DIV') {
+                    if (mutation.attributeName === "class") {
+                        if (targetNode.dataset.e2e === "basicPlayer" && targetNode.classList.contains("living_player")) { // 判断独占直播 targetNode.classList.contains("living_player")
+                            // GM_log("main live: basicPlayer 独占直播 ", targetNode.dataset.xgplayerid, targetNode.className);
+                            if (targetNode.classList.contains("xgplayer") && !targetNode.classList.contains("xgplayer-nostart") && !targetNode.classList.contains("xgplayer-pause") && !targetNode.classList.contains("isSmallWindow")) {
+                                if (!liveIds.includes(targetNode.dataset.xgplayerid)) {
+                                    liveIds.push(targetNode.dataset.xgplayerid);
+                                    liveNode = targetNode.closest("div#_douyin_live_scroll_container_");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (liveIds.length === 1) {
+            // GM_log("main live: 独占直播", liveIds[0]);
+            if (procLive("main", liveIds[0], liveNode)) {
+                observer.disconnect();
+                // GM_log("main live: 独占直播", liveIds[0], "procChildLive 处理完毕 observer disconnect");
             }
         }
     });
@@ -663,9 +712,7 @@
         }
     }
 
-    /**
-     * 结束监听 视频列表滚动
-     */
+    /** 结束监听 视频列表滚动 */
     function stopSlideListObserver() {
         // GM_log("stop observer slideList");
         observerSlideList.disconnect();
@@ -680,30 +727,61 @@
         }
     }
 
-    /**
-     * 结束监听 内嵌直播
-     */
+    /** 结束监听 内嵌直播 */
     function stopChildLiveObserver() {
         // GM_log("stop observer child live");
         observerChildLive.disconnect();
     }
 
-    startSlideListObserver();
+    /** 开启监听 独占直播 */
+    function startMainLiveObserver() {
+        const targetNode = document.querySelector("div#_douyin_live_scroll_container_"); // 每个 main live 都是需要刷新页面才进入的
+        if (targetNode) {
+            // GM_log("start observer main live");
+            observerMainLive.observe(targetNode, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ["class"] });
+        }
+    }
+
+    /** 结束监听 独占直播 */
+    function stopMainLiveObserver() {
+        // GM_log("stop observer main live");
+        observerMainLive.disconnect();
+    }
+
+    if (window.location.hostname === "www.douyin.com") {
+        // GM_log("Main page");
+        startSlideListObserver();
+    } else if (window.location.hostname === "live.douyin.com") {
+        if (window.location.pathname.match(/^\/\d{5,}/) && !window.location.search.includes('action_type=')) { // 独占直播
+            // GM_log("Live page");
+            startMainLiveObserver();
+        }
+    }
 
     if (window.onurlchange === null) {
         // GM_log("Listen Event urlchange!");
         window.addEventListener('urlchange', (info) => {
+            if (!info || !info.url) {
+                return;
+            }
             // GM_log("url change! new url: ", info.url);
             const currentUrl = info.url;
-            let results = currentUrl.match(/\/(?:root|follow)\/live\/(\d+)/);
-            if (results && results[1]) { // 内嵌直播
+            if (currentUrl.includes('live.douyin.com')) {
                 if (!currentUrl.includes('action_type=')) {
-                    stopSlideListObserver();
-                    startChildLiveObserver();
+                    stopMainLiveObserver();
+                    startMainLiveObserver();
                 }
             } else {
-                stopChildLiveObserver();
-                startSlideListObserver();
+                let results = currentUrl.match(/\/(?:root|follow)\/live\/(\d+)/);
+                if (results && results[1]) { // 内嵌直播
+                    if (!currentUrl.includes('action_type=')) {
+                        stopSlideListObserver();
+                        startChildLiveObserver();
+                    }
+                } else {
+                    stopChildLiveObserver();
+                    startSlideListObserver();
+                }
             }
         });
     };
